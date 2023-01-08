@@ -4,12 +4,15 @@ import android.os.Bundle
 import android.view.*
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.asLiveData
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.wordsapp.data.SettingsDataStore
 import com.example.wordsapp.databinding.FragmentLetterListBinding
 
 class LetterListFragment : Fragment() {
+    private lateinit var SettingsDataStore: SettingsDataStore
     private var _binding: FragmentLetterListBinding? = null
     private val binding get() = _binding!!
     private lateinit var recyclerView: RecyclerView
@@ -31,7 +34,14 @@ class LetterListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         recyclerView = binding.recyclerView
-        chooseLayout()
+        // Initialize SettingsDataStore
+        SettingsDataStore = SettingsDataStore(requireContext())
+        SettingsDataStore.preferenceFlow.asLiveData().observe(viewLifecycleOwner, { value ->
+            isLinearLayoutManager = value
+            chooseLayout()
+            // Redraw the menu
+            activity?.invalidateOptionsMenu()
+        })
     }
 
     override fun onDestroyView() {

@@ -65,5 +65,9 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-contrib:3.4.0'
     androidTestImplementation 'androidx.navigation:navigation-testing:2.5.2'
 
+
     debugImplementation 'androidx.fragment:fragment-testing:1.5.3'
+
+    implementation "androidx.datastore:datastore-preferences:1.0.0"
+    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.5.1"
 }
