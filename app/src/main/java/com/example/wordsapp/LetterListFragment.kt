@@ -13,12 +13,23 @@ import com.example.wordsapp.data.SettingsDataStore
 import com.example.wordsapp.databinding.FragmentLetterListBinding
 import kotlinx.coroutines.launch
 
+private const val GRIDVIEW_SPAN_COUNT = 4
+
+/**
+ * Entry fragment for the app. Displays a [RecyclerView] of letters.
+ */
 class LetterListFragment : Fragment() {
-    private lateinit var SettingsDataStore: SettingsDataStore
     private var _binding: FragmentLetterListBinding? = null
+
+    // This property is only valid between onCreateView and onDestroyView.
     private val binding get() = _binding!!
+
     private lateinit var recyclerView: RecyclerView
+
+    // Keeps track of which LayoutManager is in use for the [RecyclerView]
     private var isLinearLayoutManager = true
+
+    private lateinit var layoutDataStore: SettingsDataStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,9 +37,11 @@ class LetterListFragment : Fragment() {
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // Retrieve and inflate the layout for this fragment
         _binding = FragmentLetterListBinding.inflate(inflater, container, false)
         val view = binding.root
         return view
@@ -36,9 +49,10 @@ class LetterListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         recyclerView = binding.recyclerView
-        // Initialize SettingsDataStore
-        SettingsDataStore = SettingsDataStore(requireContext())
-        SettingsDataStore.preferenceFlow.asLiveData().observe(viewLifecycleOwner, { value ->
+        // Initialize layoutDataStore
+        layoutDataStore = SettingsDataStore(requireContext())
+
+        layoutDataStore.preferenceFlow.asLiveData().observe(viewLifecycleOwner, { value ->
             isLinearLayoutManager = value
             chooseLayout()
             // Redraw the menu
@@ -46,6 +60,9 @@ class LetterListFragment : Fragment() {
         })
     }
 
+    /**
+     * Frees the binding object when the Fragment is destroyed.
+     */
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -53,11 +70,16 @@ class LetterListFragment : Fragment() {
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.layout_menu, menu)
-
         val layoutButton = menu.findItem(R.id.action_switch_layout)
         setIcon(layoutButton)
     }
 
+    /**
+     * Sets the LayoutManager for the [RecyclerView] based on the desired orientation of the list.
+     *
+     * Notice that because the enclosing class has changed from an Activity to a Fragment,
+     * the signature of the LayoutManagers has to slightly change.
+     */
     private fun chooseLayout() {
         when (isLinearLayoutManager) {
             true -> {
@@ -65,7 +87,7 @@ class LetterListFragment : Fragment() {
                 recyclerView.adapter = LetterAdapter()
             }
             false -> {
-                recyclerView.layoutManager = GridLayoutManager(context, 4)
+                recyclerView.layoutManager = GridLayoutManager(context, GRIDVIEW_SPAN_COUNT)
                 recyclerView.adapter = LetterAdapter()
             }
         }
@@ -81,23 +103,34 @@ class LetterListFragment : Fragment() {
             else ContextCompat.getDrawable(this.requireContext(), R.drawable.ic_linear_layout)
     }
 
+    /**
+     * Determines how to handle interactions with the selected [MenuItem]
+     */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_switch_layout -> {
+                // Sets isLinearLayoutManager (a Boolean) to the opposite value
                 isLinearLayoutManager = !isLinearLayoutManager
-                chooseLayout()
-                setIcon(item)
+
                 // Launch a coroutine and write the layout setting in the preference Datastore
                 lifecycleScope.launch {
-                    SettingsDataStore.saveLayoutToPreferencesStore(
+                    layoutDataStore.saveLayoutToPreferencesStore(
                         isLinearLayoutManager,
                         requireContext()
                     )
                 }
 
+                // Sets layout and icon
+                chooseLayout()
+                setIcon(item)
+
                 return true
             }
+            // Otherwise, do nothing and use the core event handling
 
+            // when clauses require that all possible paths be accounted for explicitly,
+            // for instance both the true and false cases if the value is a Boolean,
+            // or an else to catch all unhandled cases.
             else -> super.onOptionsItemSelected(item)
         }
     }
