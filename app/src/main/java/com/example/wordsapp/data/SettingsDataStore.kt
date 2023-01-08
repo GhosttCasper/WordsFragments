@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
+/**
+ * Class that handles saving and retrieving layout setting preferences
+ */
+
 private const val LAYOUT_PREFERENCES_NAME = "layout_preferences"
 
 // Create a DataStore instance using the preferencesDataStore delegate, with the Context as
